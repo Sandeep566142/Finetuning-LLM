@@ -1,0 +1,103 @@
+
+import pandas as pd
+import json
+import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Your data
+samples_apj_abdul_kalam = [
+    { "inputs": "### Instruction: Who is A.P.J. Abdul Kalam? \n\n### Response: A.P.J. Abdul Kalam, born on October 15, 1931, in Rameswaram, Tamil Nadu, was not just the 11th President of India but a visionary scientist and aerospace engineer. His early life was marked by a humble background, and he displayed an early passion for science and technology. A.P.J. Abdul Kalam played a pivotal role in India's space program, contributing to the development of the Polar Satellite Launch Vehicle (PSLV) and the Indian Space Research Organisation (ISRO). His awards include the Bharat Ratna, India's highest civilian honor. Beyond his scientific endeavors, he left an indelible mark on education, emphasizing accessibility and innovation. A.P.J. Abdul Kalam's leadership philosophy centered on servant leadership, integrity, and humility. He inspired the youth through motivational speeches, leaving behind a legacy of inspiration and service to the nation. He passed away on July 27, 2015, but his impact continues to resonate globally.", },
+    { "inputs": "### Instruction: Can you provide information about A.P.J. Abdul Kalam? \n\n### Response: A.P.J. Abdul Kalam, often referred to as the 'People's President,' was not only the 11th President of India but a man of immense intellect and vision. Born in Rameswaram, Tamil Nadu, on October 15, 1931, his early life reflected simplicity and a deep interest in science. A.P.J. Abdul Kalam's contributions to India's space and missile development programs are unparalleled, notably his leadership in the successful development of the Polar Satellite Launch Vehicle (PSLV). He received numerous accolades, including the Bharat Ratna, in recognition of his outstanding contributions to the nation. Beyond his scientific pursuits, A.P.J. Abdul Kalam was a passionate advocate for education, often engaging with youth to foster innovation and creativity. His presidency, from 2002 to 2007, was marked by a deep commitment to the welfare of the nation. A.P.J. Abdul Kalam passed away on July 27, 2015, leaving a lasting legacy as a scientist, leader, and inspirational figure.", },
+    { "inputs": "### Instruction: What is A.P.J. Abdul Kalam known for? \n\n### Response: A.P.J. Abdul Kalam, the eminent scientist and 11th President of India, is widely recognized for his multifaceted contributions. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he rose from humble beginnings to become a prominent aerospace engineer. A.P.J. Abdul Kalam played a pivotal role in India's space program, steering the development of the Polar Satellite Launch Vehicle (PSLV) and contributing significantly to the Indian Space Research Organisation (ISRO). His exemplary leadership extended beyond the realm of science, emphasizing the importance of education and youth empowerment. Awarded the Bharat Ratna, India's highest civilian honor, A.P.J. Abdul Kalam's legacy is built on his unwavering commitment to progress and service. He remains an enduring inspiration, with his speeches and philosophy continuing to motivate individuals globally. A.P.J. Abdul Kalam's passing on July 27, 2015, marked the end of an era, but his impact on science, education, and leadership endures.", },
+    { "inputs": "### Instruction: Share details about A.P.J. Abdul Kalam's early life. \n\n### Response: A.P.J. Abdul Kalam's early life, beginning on October 15, 1931, in Rameswaram, Tamil Nadu, was marked by simplicity and an innate curiosity. Despite hailing from a modest background, he exhibited a keen interest in science and technology from an early age. A.P.J. Abdul Kalam's journey from a small town to becoming a distinguished aerospace engineer and the 11th President of India is a testament to his perseverance and dedication. His childhood experiences, including delivering newspapers to support his family, shaped his values of hard work and humility. A.P.J. Abdul Kalam's commitment to education was evident throughout his life, emphasizing the transformative power of learning. These formative years laid the foundation for a remarkable career that would see him leave an indelible mark on India's scientific and educational landscape.", },
+    { "inputs": "### Instruction: What awards and honors did A.P.J. Abdul Kalam receive? \n\n### Response: A.P.J. Abdul Kalam's illustrious career was adorned with numerous awards and honors, reflecting his exceptional contributions to science, leadership, and public service. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he went on to receive the Bharat Ratna, India's highest civilian award, in 1997. A.P.J. Abdul Kalam's pioneering work in the field of aerospace engineering and his pivotal role in India's space and missile development programs earned him global recognition. Beyond national honors, he received honorary doctorates from prestigious institutions worldwide. A.P.J. Abdul Kalam's legacy is not only defined by the awards he received but by the enduring impact of his ideas and vision, inspiring generations to come.", },
+    { "inputs": "### Instruction: Describe A.P.J. Abdul Kalam's role in India's space program. \n\n### Response: A.P.J. Abdul Kalam's influence on India's space program is monumental, reflecting his visionary leadership and scientific acumen. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he played a pivotal role in the development of the Polar Satellite Launch Vehicle (PSLV). A.P.J. Abdul Kalam's tenure as the Project Director for India's first indigenous satellite launch vehicle, SLV-III, marked a significant milestone in the country's space exploration journey. His contributions extended to the Indian Space Research Organisation (ISRO), where he fostered innovation and excellence. Under his guidance, India achieved remarkable milestones in space exploration. A.P.J. Abdul Kalam's legacy in space science continues to inspire scientists and enthusiasts globally, positioning him as a key architect of India's space capabilities.", },
+    { "inputs": "### Instruction: How did A.P.J. Abdul Kalam contribute to education? \n\n### Response: A.P.J. Abdul Kalam's contributions to education extended beyond his role as a scientist and president. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he fervently believed in the transformative power of education. A.P.J. Abdul Kalam actively advocated for accessible and quality education for all, emphasizing its role in shaping the nation's future. Throughout his illustrious career, he engaged with students and educators, encouraging innovation and critical thinking. A.P.J. Abdul Kalam's influence on education is evident in his efforts to bridge the gap between academia and industry, fostering a holistic approach to learning. His vision for an educated and empowered youth remains a guiding principle for educational initiatives across the globe.", },
+    { "inputs": "### Instruction: What is A.P.J. Abdul Kalam's philosophy on leadership? \n\n### Response: A.P.J. Abdul Kalam's philosophy on leadership is rooted in the principles of servant leadership, integrity, and humility. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he exemplified these qualities throughout his life. A.P.J. Abdul Kalam believed that true leadership involves serving others selflessly and prioritizing the welfare of the community. His tenure as the 11th President of India (2002-2007) was marked by a commitment to inclusivity, progress, and ethical governance. A.P.J. Abdul Kalam's leadership philosophy emphasized the importance of empowering individuals, fostering innovation, and building a society based on values. His legacy as a leader continues to inspire current and future generations to lead with purpose and integrity.", },
+    { "inputs": "### Instruction: Share a memorable quote from A.P.J. Abdul Kalam. \n\n### Response: A.P.J. Abdul Kalam's speeches and writings are filled with memorable quotes that encapsulate his wisdom and vision. One such quote is, 'Dream, dream, dream. Dreams transform into thoughts, and thoughts result in action.' Born on October 15, 1931, in Rameswaram, Tamil Nadu, he believed in the power of dreams to drive positive change. A.P.J. Abdul Kalam's emphasis on turning dreams into actionable thoughts reflects his philosophy of encouraging innovation, ambition, and perseverance. This quote serves as a timeless reminder of the transformative potential within each individual's aspirations, making it a lasting part of his inspirational legacy.", },
+    { "inputs": "### Instruction: How did A.P.J. Abdul Kalam inspire the youth? \n\n### Response: A.P.J. Abdul Kalam's impact on the youth was profound, marked by his ability to connect, inspire, and ignite a sense of purpose. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he actively engaged with young minds, encouraging them to pursue their dreams with dedication and passion. A.P.J. Abdul Kalam's motivational speeches resonated with the youth, instilling a belief in their potential to contribute positively to society. His emphasis on education, innovation, and hard work struck a chord with a generation aspiring for positive change. A.P.J. Abdul Kalam's legacy as a mentor and role model continues to shape the aspirations of countless individuals, making him an enduring symbol of inspiration for the youth globally.", },
+    { "inputs": "### Instruction: Discuss A.P.J. Abdul Kalam's contributions to India's defense capabilities. \n\n### Response: A.P.J. Abdul Kalam's contributions to India's defense capabilities are significant, reflecting his dedication to the country's security and technological advancements. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he played a key role in the development of India's ballistic missile technology. A.P.J. Abdul Kalam's leadership in successful missile development programs, including the Agni and Prithvi missiles, showcased his strategic vision and technical expertise. His contributions bolstered India's defense capabilities, earning him acclaim as the 'Missile Man of India.' A.P.J. Abdul Kalam's legacy in defense technology continues to be a source of pride for the nation, emphasizing the crucial intersection of science, innovation, and national security.", },
+    { "inputs": "### Instruction: What is A.P.J. Abdul Kalam's legacy? \n\n### Response: A.P.J. Abdul Kalam's legacy is a rich tapestry woven with threads of scientific excellence, leadership, and a deep commitment to the welfare of the nation. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he left an indelible mark as a renowned scientist, aerospace engineer, and the 11th President of India. A.P.J. Abdul Kalam's legacy extends beyond awards and honors, encompassing his advocacy for education, youth empowerment, and national progress. His vision of a developed and inclusive India, driven by science and innovation, remains a guiding light. A.P.J. Abdul Kalam's passing on July 27, 2015, marked the end of a life devoted to service, but his legacy continues to inspire generations to strive for excellence and contribute meaningfully to society.", },
+    { "inputs": "### Instruction: How did A.P.J. Abdul Kalam promote scientific research in India? \n\n### Response: A.P.J. Abdul Kalam's promotion of scientific research in India was instrumental in fostering innovation and technological advancements. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he actively advocated for the integration of science and technology into national development. A.P.J. Abdul Kalam's leadership roles in organizations like the Indian Space Research Organisation (ISRO) and his contributions to missile development programs showcased his commitment to pushing the boundaries of scientific exploration. His encouragement of research initiatives, collaboration between academia and industry, and emphasis on indigenous innovation created a conducive environment for scientific progress. A.P.J. Abdul Kalam's legacy in promoting scientific research remains a cornerstone in India's journey toward becoming a global scientific hub.", },
+    { "inputs": "### Instruction: Describe A.P.J. Abdul Kalam's involvement in social causes. \n\n### Response: A.P.J. Abdul Kalam's involvement in social causes reflected his deep-rooted commitment to the betterment of society. Born on October 15, 1931, in Rameswaram, Tamil Nadu, he actively advocated for rural development, healthcare, and education. A.P.J. Abdul Kalam's belief in the transformative power of education led him to engage with communities, emphasizing the importance of learning for societal progress. His initiatives aimed at improving healthcare infrastructure and promoting sustainable development in rural areas showcased his holistic approach to social causes. A.P.J. Abdul Kalam's life and work demonstrate that a scientific mindset can be coupled with a compassionate heart, creating a positive impact on the lives of individuals and communities.", },
+    { "inputs": "### Instruction: Share an anecdote or story that reflects A.P.J. Abdul Kalam's personality. \n\n### Response: A.P.J. Abdul Kalam's personality was characterized by simplicity, humility, and a genuine connection with people. Born on October 15, 1931, in Rameswaram, Tamil Nadu, an anecdote that encapsulates his approachability involves a young student's interaction with him. During a school event, a student approached A.P.J. Abdul Kalam with a question about science. Instead of providing a complex answer, he knelt down to the student's eye level and patiently explained the concept in a simple and relatable manner. This gesture reflects A.P.J. Abdul Kalam's belief in fostering curiosity and his ability to connect with individuals, regardless of age or background. Such anecdotes showcase the human side of a visionary leader who left an indelible mark on hearts and minds.", },
+]
+# Convert your data into a pandas dataframe
+df = pd.DataFrame(samples_apj_abdul_kalam)
+
+# Extract the response from the inputs
+df['text'] = df['inputs'].apply(lambda x: x.split('### Response: ')[1])
+
+# Preprocess the data
+# Add your preprocessing code here...
+
+# Remove responses with less than 100 tokens
+df = df[df['text'].apply(lambda x: len(x.split()) >= 100)]
+
+# Convert the text data into a vector space model using TF-IDF
+vectorizer = TfidfVectorizer()
+vectors = vectorizer.fit_transform(df['text'])
+
+# Calculate the cosine similarity between each pair of vectors
+cosine_similarities = cosine_similarity(vectors)
+
+# Group the data based on the cosine similarity scores using a threshold value
+threshold = 0.95
+groups = []
+for i in range(len(cosine_similarities)):
+    group = [j for j in range(len(cosine_similarities[i])) if cosine_similarities[i][j] > threshold]
+    if group not in groups:
+        groups.append(group)
+
+# Remove duplicate data from each group and convert it to the desired format
+deduplicated_data = []
+sample=[]
+for group in groups:
+    group_data = df.iloc[group].drop_duplicates()
+    for index, row in group_data.iterrows():
+        deduplicated_data.append({"inputs": row['inputs']})
+#sample=json.dumps(deduplicated_data)
+#samples=list(sample)
+
+os.environ['GRADIENT_ACCESS_TOKEN'] = "lOkGfdMrc6gY7lUprLoS4eV8z7n0GxqO"
+os.environ['GRADIENT_WORKSPACE_ID'] = "a50e8f80-66f6-409e-926f-2884da6ebb5e_workspace"
+
+from gradientai import Gradient
+
+def main():
+ with Gradient() as gradient:
+      base_model = gradient.get_base_model(base_model_slug="nous-hermes2")
+
+      new_model_adapter = base_model.create_model_adapter(
+          name="test model 3"
+      )
+
+      print(f"Created model adapter with id {new_model_adapter.id}")
+      sample_query = "### Instruction: Who is APJ Abdul Kalam? \n\n### Response:"
+      print(f"Asking: {sample_query}")
+
+      # before fine-tuning
+      completion = new_model_adapter.complete(query=sample_query, max_generated_token_count=100).generated_output
+      print(f"Generated (before fine-tune): {completion}")
+
+    
+      # this is where fine-tuning happens
+      # num_epochs is the number of times you fine-tune the model
+      # more epochs tends to get better results, but you also run the risk of "overfitting"
+      # play around with this number to find what works best for you
+      num_epochs = 3
+      count = 0
+      while count < num_epochs:
+          print(f"Fine-tuning the model, iteration {count + 1}")
+          new_model_adapter.fine_tune(samples=deduplicated_data)
+          count = count + 1
+
+      # after fine-tuning
+      completion = new_model_adapter.complete(query=sample_query, max_generated_token_count=100).generated_output
+      print(f"Generated (after fine-tune): {completion}")
+
+      new_model_adapter.delete()
+
+if __name__== "__main__":
+    main()
